@@ -2,97 +2,60 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+## Overview
+The purpose of this project was to design a PID controller and tweak the PID hyperparameters by applying the general processing flow as described in the lessons.
+The simulator provides cross-track error (CTE), speed, and steering angle data. The PID controller operates steering and throttle commands to drive the car reliably around the track.
+
 
 ## Dependencies
-
 * cmake >= 3.5
- * All OSes: [click here for installation instructions](https://cmake.org/install/)
 * make >= 4.1(mac, linux), 3.81(Windows)
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
 * gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools]((https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
 * [uWebSockets](https://github.com/uWebSockets/uWebSockets)
-  * Run either `./install-mac.sh` or `./install-ubuntu.sh`.
-  * If you install from source, checkout to commit `e94b6e1`, i.e.
-    ```
-    git clone https://github.com/uWebSockets/uWebSockets 
-    cd uWebSockets
-    git checkout e94b6e1
-    ```
-    Some function signatures have changed in v0.14.x. See [this PR](https://github.com/udacity/CarND-MPC-Project/pull/3) for more details.
 * Simulator. You can download these from the [project intro page](https://github.com/udacity/self-driving-car-sim/releases) in the classroom.
 
-Fellow students have put together a guide to Windows set-up for the project [here](https://s3-us-west-1.amazonaws.com/udacity-selfdrivingcar/files/Kidnapped_Vehicle_Windows_Setup.pdf) if the environment you have set up for the Sensor Fusion projects does not work for this project. There's also an experimental patch for windows in this [PR](https://github.com/udacity/CarND-PID-Control-Project/pull/3).
 
-## Basic Build Instructions
+## Rubic Points
+### Compilation
+* Your code should compile.
+No error message.
 
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./pid`. 
+### Implementation
+* The PID procedure follows what was taught in the lessons.
+PID procedure is coded in src/PID.cpp and src/PID.h. 
+PID coefficients(Kp, Ki, Kd) are moved from private section to public section in PID.h.
+"PID::UpdateError" computes proportional, integral and derivative errors, and "PID::TotalError" returns the total error multiplying each error and its coefficient.
 
-Tips for setting up your environment can be found [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/23d376c7-0195-4276-bdf0-e02f1f3c665d)
+### Reflection
+* Describe the effect each of the P, I, D components had in your implementation.
+The test simulation moives of P-control, PD-control and PID-control are stored in "movie" folder.
 
-## Editor Settings
+- P(proportional)-control
+consists of car's distance from the center of lane(=CTE) multiplied by its coefficient.If the car is far right it steers hard to the left, so the car is most likely to occilate around the center of the lane. (please refer to the movie:P-control.mov)
 
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
+- PD(proportional, derivative)-control
+consists of P-control and D-control. The advantage of D-control is the recovery of sudden error increase, such as sharp curve. In the PD-control movie(1. PD-Ctrl.mov), we can see big improvement compared to the movie of P-control(0. P-Ctrl.mov)
 
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
+- PID(proportional, integral and derivative)-control
+has I-control in addition to PD-control. The I-control reduces an unknown offset which prevents from reaching the center line. By comparing the position of the car in PD-control movie and PID-control (please run the simulator), we can clearly see the superiority of PID-control.
 
-## Code Style
+* Describe how the final hyperparameters were chosen.
+(main.cpp, Line 111- 183)
+Initial value of PID coefficients are derived from manual tweaking. 
+For twiddling, I slightly modify the algorithm of twiddle taught in the lessons, by utilizing bisection method.
+Firstly, coefficient of P-controller(Kp) is to be optimized alone, then proceeds to adjustment of coefficient of D-controller(Kd).
+Lastly,  coefficient of I-controller(Ki) will be tweaked for completion.
+The derived optimal parameters are as follows, [ Kp, Ki, Kd ] = [0.16, 0.0018, 1.35]
 
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
+### Simulation
+* The vehicle must successfully drive a lap around the track.
 
-## Project Instructions and Rubric
+- Throttle Control
+To control the throttle valve is almost equal to acceleration/deceleration control.
+Below is basic concept of throttle control logic I implemented.
+-- Acceleration is done only when the car is stable considering cars's deviation from lane center, car's agnle and steering value.
+-- In the speed range between o and half of the limit, relatively strong acceleration is allowed.
+-- From half up until limit, mild acceleration is being done.
+-- When car is out of stability and quick deceleration is needed for recovery, strong deceleration will be done in propotion to steer_value.
 
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
-
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/e8235395-22dd-4b87-88e0-d108c5e5bbf4/concepts/6a4d8d42-6a04-4aa6-b284-1697c0fd6562)
-for instructions and the project rubric.
-
-## Hints!
-
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
-
-## Call for IDE Profiles Pull Requests
-
-Help your fellow students!
-
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
-
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
-
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
-
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
-
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
-
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
-
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
-
+Thanks to the optimized PID parameters and safe throttle control logic, the car can successfully drives around the track.
